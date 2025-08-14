@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
@@ -17,19 +17,14 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
 
-  useEffect(() => {
-    checkAuth()
-    fetchSurveys()
-  }, [])
-
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
       router.push('/admin/login')
     }
-  }
+  }, [router])
 
-  const fetchSurveys = async () => {
+  const fetchSurveys = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('surveys')
@@ -43,7 +38,12 @@ export default function AdminDashboard() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    checkAuth()
+    fetchSurveys()
+  }, [checkAuth, fetchSurveys])
 
   const deleteSurvey = async (id: string) => {
     if (!confirm('Are you sure you want to delete this survey?')) return

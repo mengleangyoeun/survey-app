@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
@@ -10,12 +10,8 @@ import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ChevronLeft, ChevronRight, Send } from 'lucide-react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { responseSchema, type ResponseFormData } from '@/lib/validations'
 import { Database } from '@/lib/database.types'
 
 type Survey = Database['public']['Tables']['surveys']['Row']
@@ -32,16 +28,12 @@ export default function SurveyPage() {
 
   const [survey, setSurvey] = useState<SurveyWithQuestions | null>(null)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
-  const [answers, setAnswers] = useState<Record<string, any>>({})
+  const [answers, setAnswers] = useState<Record<string, string | string[]>>({})
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchSurvey()
-  }, [slug])
-
-  const fetchSurvey = async () => {
+  const fetchSurvey = useCallback(async () => {
     try {
       const { data: surveyData, error: surveyError } = await supabase
         .from('surveys')
@@ -64,14 +56,18 @@ export default function SurveyPage() {
         ...surveyData,
         questions: questionsData || []
       })
-    } catch (err: any) {
-      setError(err.message || 'Failed to load survey')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load survey')
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [slug])
 
-  const handleAnswerChange = (questionId: string, value: any) => {
+  useEffect(() => {
+    fetchSurvey()
+  }, [fetchSurvey])
+
+  const handleAnswerChange = (questionId: string, value: string | string[]) => {
     setAnswers(prev => ({
       ...prev,
       [questionId]: value
@@ -145,8 +141,9 @@ export default function SurveyPage() {
       if (answersError) throw answersError
 
       router.push('/survey/thank-you')
-    } catch (err: any) {
-      setError(err.message || 'Failed to submit survey')
+    } catch (err: unknown) {
+      console.error('Error submitting survey:', err)
+      setError('Failed to submit survey. Please try again.')
     } finally {
       setIsSubmitting(false)
     }
@@ -178,9 +175,10 @@ export default function SurveyPage() {
 
       case 'multiple_choice':
         const options = question.options ? JSON.parse(question.options as string) : []
+        const stringValue = Array.isArray(value) ? value[0] || '' : value
         return (
           <RadioGroup
-            value={value}
+            value={stringValue}
             onValueChange={(val) => handleAnswerChange(question.id, val)}
             className="space-y-3"
           >
@@ -197,9 +195,10 @@ export default function SurveyPage() {
 
       case 'likert_scale':
         const scales = ['Strongly Disagree', 'Disagree', 'Neutral', 'Agree', 'Strongly Agree']
+        const likertValue = Array.isArray(value) ? value[0] || '' : value
         return (
           <RadioGroup
-            value={value}
+            value={likertValue}
             onValueChange={(val) => handleAnswerChange(question.id, val)}
             className="space-y-3"
           >
@@ -253,7 +252,7 @@ export default function SurveyPage() {
           <div className="text-center space-y-4">
             <h1 className="text-2xl font-bold text-red-600">Survey Not Found</h1>
             <p className="text-gray-600">
-              The survey you're looking for doesn't exist or is not currently active.
+              Can&apos;t find what you&apos;re looking for? Let&apos;s get you back on track.
             </p>
             <Button 
               variant="elevated" 

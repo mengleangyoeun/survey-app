@@ -91,8 +91,9 @@ export default function CreateSurvey() {
       if (questionsError) throw questionsError
 
       router.push('/admin/dashboard')
-    } catch (err: any) {
-      setError(err.message || 'An error occurred while creating the survey')
+    } catch (err: unknown) {
+      console.error('Error creating survey:', err)
+      setError('Failed to create survey. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -185,7 +186,7 @@ export default function CreateSurvey() {
                 <Label htmlFor="status">Status</Label>
                 <Select
                   value={watch('status')}
-                  onValueChange={(value) => setValue('status', value as any)}
+                  onValueChange={(value) => setValue('status', value as 'draft' | 'active' | 'closed')}
                 >
                   <SelectTrigger className="border-2 border-black">
                     <SelectValue />
@@ -256,7 +257,7 @@ export default function CreateSurvey() {
                       <Select
                         value={watch(`questions.${index}.question_type`)}
                         onValueChange={(value) => 
-                          setValue(`questions.${index}.question_type`, value as any)
+                          setValue(`questions.${index}.question_type`, value as 'multiple_choice' | 'short_answer' | 'long_answer' | 'likert_scale' | 'file_upload')
                         }
                       >
                         <SelectTrigger className="border-2 border-black">

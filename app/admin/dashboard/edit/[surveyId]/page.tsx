@@ -14,7 +14,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react'
 import Link from 'next/link'
-import { supabase, createServerClient } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import { surveyWithQuestionsSchema, type SurveyWithQuestionsData } from '@/lib/validations'
 import { Database } from '@/lib/database.types'
 
@@ -92,7 +92,7 @@ export default function EditSurvey() {
             .sort((a: Question, b: Question) => a.order_index - b.order_index)
             .map((q: Question) => ({
               question_text: q.question_text,
-              question_type: q.question_type as any,
+              question_type: q.question_type as 'multiple_choice' | 'short_answer' | 'long_answer' | 'likert_scale' | 'file_upload',
               options: q.options ? JSON.parse(q.options as string) : undefined,
               required: q.required,
               order_index: q.order_index
@@ -282,7 +282,7 @@ export default function EditSurvey() {
                 <Label>Status</Label>
                 <Select
                   value={watch('status')}
-                  onValueChange={(value) => setValue('status', value as any)}
+                  onValueChange={(value) => setValue('status', value as 'draft' | 'active' | 'closed')}
                 >
                   <SelectTrigger className="border-2 border-black">
                     <SelectValue />
@@ -314,7 +314,7 @@ export default function EditSurvey() {
 
             {fields.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                No questions added yet. Click "Add Question" to get started.
+                No questions added yet. Click &quot;Add Question&quot; to get started.
               </div>
             ) : (
               <div className="space-y-6">
@@ -353,7 +353,7 @@ export default function EditSurvey() {
                         <Select
                           value={watch(`questions.${index}.question_type`)}
                           onValueChange={(value) => 
-                            setValue(`questions.${index}.question_type`, value as any)
+                            setValue(`questions.${index}.question_type`, value as 'multiple_choice' | 'short_answer' | 'long_answer' | 'likert_scale' | 'file_upload')
                           }
                         >
                           <SelectTrigger className="border-2 border-black">

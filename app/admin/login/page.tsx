@@ -40,7 +40,7 @@ export default function AdminLogin() {
       } else {
         router.push('/admin/dashboard')
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred')
     } finally {
       setIsLoading(false)
